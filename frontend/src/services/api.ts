@@ -2,6 +2,14 @@ import { localFallback } from './localFallback';
 
 const API_BASE_URL = (import.meta.env.VITE_API_URL || '/api').replace(/\/+$/, '');
 
+const hasRemoteBackend = Boolean(
+  import.meta.env.VITE_API_URL ||
+  (typeof window !== 'undefined' &&
+    (window.location.hostname === 'localhost' ||
+     window.location.hostname === '127.0.0.1' ||
+     window.location.hostname === '[::1]'))
+);
+
 export class ApiError extends Error {
   status: number;
   data: any;
@@ -41,11 +49,16 @@ function isFallbackEligible(error: any): boolean {
 }
 
 async function withFallback<T>(apiFn: () => Promise<T>, fallbackFn: () => Promise<T>): Promise<T> {
+  // If deployed to a static host (like Vercel) without a custom VITE_API_URL, operate in standalone client mode directly
+  if (!hasRemoteBackend) {
+    return await fallbackFn();
+  }
+
   try {
     return await apiFn();
   } catch (error: any) {
     if (isFallbackEligible(error)) {
-      console.warn('Backend server unreachable or static SPA host detected, operating in standalone demo mode:', error);
+      console.warn('Backend server unreachable, operating in standalone demo mode:', error);
       return await fallbackFn();
     }
     throw error;

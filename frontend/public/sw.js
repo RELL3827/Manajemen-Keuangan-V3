@@ -1,19 +1,17 @@
-// FinTrack Service Worker for PWA
-const CACHE_NAME = 'fintrack-cache-v1';
-const ASSETS = [
-  '/',
-  '/index.html',
+// FinTrack Service Worker for PWA (v3)
+const CACHE_NAME = 'fintrack-cache-v3';
+const STATIC_ASSETS = [
   '/logo.svg',
   '/manifest.json'
 ];
 
 self.addEventListener('install', (event) => {
+  self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(ASSETS);
+      return cache.addAll(STATIC_ASSETS);
     })
   );
-  self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
@@ -22,6 +20,7 @@ self.addEventListener('activate', (event) => {
       return Promise.all(
         keys.map((key) => {
           if (key !== CACHE_NAME) {
+            console.log('Purging old service worker cache:', key);
             return caches.delete(key);
           }
         })
@@ -32,11 +31,13 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  // Skip dev files, vite modules, localhost, and API calls from cache interception
   const url = new URL(event.request.url);
+
+  // NEVER intercept API calls, navigation (HTML), dev scripts, or non-GET requests
   if (
     event.request.method !== 'GET' ||
-    url.pathname.startsWith('/api/') ||
+    event.request.mode === 'navigate' ||
+    url.pathname.startsWith('/api') ||
     url.pathname.startsWith('/@') ||
     url.pathname.startsWith('/src/') ||
     url.pathname.includes('node_modules') ||
@@ -45,22 +46,25 @@ self.addEventListener('fetch', (event) => {
   ) {
     return;
   }
+
+  // Network-first for dynamic assets, cache only static assets
   event.respondWith(
-    caches.match(event.request).then((cachedResponse) => {
-      return cachedResponse || fetch(event.request).then((networkResponse) => {
-        if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
+    fetch(event.request)
+      .then((networkResponse) => {
+        if (
+          networkResponse &&
+          networkResponse.status === 200 &&
+          (url.pathname.endsWith('.svg') || url.pathname.endsWith('.png') || url.pathname.endsWith('.json'))
+        ) {
           const responseToCache = networkResponse.clone();
           caches.open(CACHE_NAME).then((cache) => {
             cache.put(event.request, responseToCache);
           });
         }
         return networkResponse;
-      });
-    }).catch(() => {
-      // offline fallback
-      if (event.request.mode === 'navigate') {
-        return caches.match('/');
-      }
-    })
+      })
+      .catch(() => {
+        return caches.match(event.request);
+      })
   );
 });

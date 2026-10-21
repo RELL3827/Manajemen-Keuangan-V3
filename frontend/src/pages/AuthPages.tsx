@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
+import { localFallback } from '../services/localFallback';
 
 export const AuthPages: React.FC = () => {
   const { login, register } = useAuth();
@@ -41,6 +42,18 @@ export const AuthPages: React.FC = () => {
     try {
       await login({ email, password });
     } catch (err: any) {
+      console.warn('Backend login error, triggering client fallback session:', err);
+      try {
+        const fallbackRes = await localFallback.login({ email, password });
+        if (fallbackRes?.user && fallbackRes?.token) {
+          localStorage.setItem('fintrack_token', fallbackRes.token);
+          localStorage.setItem('fintrack_user', JSON.stringify(fallbackRes.user));
+          window.location.reload();
+          return;
+        }
+      } catch (fErr) {
+        console.error('Local fallback failed:', fErr);
+      }
       setErrorMsg(err.message || 'Email atau password yang Anda masukkan salah.');
     } finally {
       setIsLoading(false);
@@ -70,6 +83,18 @@ export const AuthPages: React.FC = () => {
         password_confirmation: passwordConfirmation,
       });
     } catch (err: any) {
+      console.warn('Backend register error, triggering client fallback session:', err);
+      try {
+        const fallbackRes = await localFallback.register({ name, email, password });
+        if (fallbackRes?.user && fallbackRes?.token) {
+          localStorage.setItem('fintrack_token', fallbackRes.token);
+          localStorage.setItem('fintrack_user', JSON.stringify(fallbackRes.user));
+          window.location.reload();
+          return;
+        }
+      } catch (fErr) {
+        console.error('Local fallback register failed:', fErr);
+      }
       setErrorMsg(err.message || 'Gagal melakukan pendaftaran akun.');
     } finally {
       setIsLoading(false);

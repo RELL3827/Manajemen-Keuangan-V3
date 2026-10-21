@@ -43,10 +43,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         localStorage.setItem('fintrack_user', JSON.stringify(res.user));
       }
     } catch {
-      setUser(null);
-      setToken(null);
-      localStorage.removeItem('fintrack_user');
-      localStorage.removeItem('fintrack_token');
+      const saved = localStorage.getItem('fintrack_user');
+      if (saved) {
+        try {
+          setUser(JSON.parse(saved));
+        } catch {
+          setUser(null);
+          setToken(null);
+          localStorage.removeItem('fintrack_user');
+          localStorage.removeItem('fintrack_token');
+        }
+      } else {
+        setUser(null);
+        setToken(null);
+        localStorage.removeItem('fintrack_user');
+        localStorage.removeItem('fintrack_token');
+      }
     } finally {
       setIsLoading(false);
     }
