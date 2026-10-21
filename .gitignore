@@ -1,15 +1,57 @@
 # Root .gitignore
+
+# Environment & Secret files (STRICT IGNORE)
+.env
+.env.*
+.env.local
+.env.*.local
+*.env
+backend/.env
+backend/.env.*
+backend/.env.backup
+backend/.env.production
+frontend/.env
+frontend/.env.*
+frontend/.env.local
+frontend/.env.*.local
+
+# Allow only public example configuration templates
+!.env.example
+!backend/.env.example
+!frontend/.env.example
+
+# Dependencies
 node_modules/
 backend/vendor/
-backend/.env
+frontend/node_modules/
+
+# Databases & local journals
 backend/database/*.sqlite
 backend/database/*.sqlite-journal
+*.sqlite
+*.sqlite3
+*.db
+
+# Storage & framework caches
 backend/storage/*.key
 backend/storage/logs/
 backend/storage/framework/cache/
 backend/storage/framework/sessions/
 backend/storage/framework/views/
+backend/storage/pail/
+
+# Frontend builds
 frontend/dist/
-frontend/node_modules/
+frontend/dist-ssr/
+
+# OS & Editor files
 .DS_Store
 Thumbs.db
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
