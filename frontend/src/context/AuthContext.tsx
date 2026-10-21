@@ -17,8 +17,14 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(() => {
-    const saved = localStorage.getItem('fintrack_user');
-    return saved ? JSON.parse(saved) : null;
+    try {
+      const saved = localStorage.getItem('fintrack_user');
+      if (!saved || saved === 'undefined' || saved === 'null') return null;
+      return JSON.parse(saved);
+    } catch {
+      localStorage.removeItem('fintrack_user');
+      return null;
+    }
   });
   const [token, setToken] = useState<string | null>(() => {
     return localStorage.getItem('fintrack_token');

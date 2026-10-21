@@ -32,8 +32,17 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  // Only cache GET requests, skip /api requests for dynamic financial data
-  if (event.request.method !== 'GET' || event.request.url.includes('/api/')) {
+  // Skip dev files, vite modules, localhost, and API calls from cache interception
+  const url = new URL(event.request.url);
+  if (
+    event.request.method !== 'GET' ||
+    url.pathname.startsWith('/api/') ||
+    url.pathname.startsWith('/@') ||
+    url.pathname.startsWith('/src/') ||
+    url.pathname.includes('node_modules') ||
+    url.hostname === 'localhost' ||
+    url.hostname === '127.0.0.1'
+  ) {
     return;
   }
   event.respondWith(

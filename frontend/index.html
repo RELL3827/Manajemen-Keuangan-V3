@@ -11,17 +11,84 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+      html, body {
+        background-color: #020617;
+        color: #f8fafc;
+        margin: 0;
+        padding: 0;
+        min-height: 100vh;
+        font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+      }
+      #initial-loader {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background: #020617;
+        z-index: 9999;
+        gap: 16px;
+      }
+      .spinner-ring {
+        width: 44px;
+        height: 44px;
+        border: 3px solid rgba(16, 185, 129, 0.15);
+        border-top-color: #10b981;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+      }
+      @keyframes spin {
+        to { transform: rotate(360deg); }
+      }
+    </style>
   </head>
   <body class="bg-slate-950 text-slate-100 antialiased selection:bg-emerald-500 selection:text-white">
-    <div id="root"></div>
+    <div id="root">
+      <div id="initial-loader">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#10b981,#06b6d4);display:flex;align-items:center;justify-content:center;box-shadow:0 0 20px rgba(16,185,129,0.3);">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#020617" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+          </div>
+          <span style="font-weight:800;font-size:20px;letter-spacing:-0.5px;color:#ffffff;">Fin<span style="color:#10b981;">Track</span></span>
+        </div>
+        <div class="spinner-ring"></div>
+        <p style="font-size:12px;color:#64748b;margin:0;">Memuat aplikasi finansial...</p>
+      </div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
     <script>
+      // Clean up stale service worker caches on localhost/127.0.0.1 to prevent Vite module breakages
       if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js').catch(err => {
-            console.log('SW registration note:', err);
+        const isLocalhost = Boolean(
+          window.location.hostname === 'localhost' ||
+          window.location.hostname === '[::1]' ||
+          window.location.hostname.match(/^127(?:\.(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)){3}$/)
+        );
+
+        if (isLocalhost) {
+          navigator.serviceWorker.getRegistrations().then((registrations) => {
+            for (const registration of registrations) {
+              registration.unregister();
+            }
           });
-        });
+          if ('caches' in window) {
+            caches.keys().then((keys) => {
+              keys.forEach((key) => {
+                if (key.startsWith('fintrack-cache')) {
+                  caches.delete(key);
+                }
+              });
+            });
+          }
+        } else {
+          window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/sw.js').catch((err) => {
+              console.log('SW registration note:', err);
+            });
+          });
+        }
       }
     </script>
   </body>
