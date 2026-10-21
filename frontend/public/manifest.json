@@ -1,0 +1,19 @@
+{
+  "short_name": "FinTrack",
+  "name": "FinTrack — Manajemen Keuangan Pribadi",
+  "description": "Aplikasi Manajemen Keuangan Pribadi Modern, Budgeting, dan Saving Goals",
+  "icons": [
+    {
+      "src": "/logo.svg",
+      "type": "image/svg+xml",
+      "sizes": "192x192 512x512",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#090d16",
+  "theme_color": "#090d16",
+  "display": "standalone",
+  "orientation": "portrait",
+  "scope": "/"
+}

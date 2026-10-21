@@ -1,0 +1,15 @@
+# Root .gitignore
+node_modules/
+backend/vendor/
+backend/.env
+backend/database/*.sqlite
+backend/database/*.sqlite-journal
+backend/storage/*.key
+backend/storage/logs/
+backend/storage/framework/cache/
+backend/storage/framework/sessions/
+backend/storage/framework/views/
+frontend/dist/
+frontend/node_modules/
+.DS_Store
+Thumbs.db
