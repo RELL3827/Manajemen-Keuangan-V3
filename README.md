@@ -228,6 +228,28 @@ php artisan migrate:fresh --seed
 
 ---
 
+## 🌐 Panduan Online / Deploy ke Vercel
+
+Aplikasi ini telah dikonfigurasi penuh dengan `vercel.json` dan fallback mode interaktif, sehingga dapat di-deploy secara instan ke Vercel:
+
+### Langkah Deploy ke Vercel (Gratis & Cepat):
+1. Buka [https://vercel.com](https://vercel.com) dan masuk menggunakan akun **GitHub** Anda.
+2. Klik tombol **"Add New..."** lalu pilih **"Project"**.
+3. Cari dan pilih repository **`RELL3827/Manajemen-Keuangan-V3`**, lalu klik **"Import"**.
+4. Semua pengaturan (*Framework Preset*, *Build Command*, dan *Output Directory*) sudah otomatis terkonfigurasi melalui file `vercel.json` di root proyek.
+5. Klik **"Deploy"** dan tunggu proses build selesai (~1 menit).
+6. Website FinTrack Anda langsung aktif dan dapat diakses oleh siapa saja di link gratis `https://[nama-proyek].vercel.app`!
+
+> [!TIP]
+> **Mode Standalone / Demo Langsung Aktif**: Saat diakses di Vercel, FinTrack otomatis mendukung mode interaktif dengan penyimpanan data lokal di browser. Pengguna dapat langsung mencoba semua fitur: transaksi, grafik, anggaran, tabungan, tagihan, hingga suara (AI voice input).
+> 
+> **Menghubungkan Backend Laravel Database**: Jika ingin sinkronisasi multi-device dengan database SQL terpusat, deploy folder `backend/` ke penyedia seperti **Railway / Render / VPS**, kemudian tambahkan Environment Variable di Vercel Dashboard:
+> ```env
+> VITE_API_URL=https://url-backend-anda.com/api
+> ```
+
+---
+
 ## 🚀 Panduan Deployment ke Produksi (SaaS Ready)
 
 1. **Build Frontend**:
@@ -235,7 +257,7 @@ php artisan migrate:fresh --seed
    cd frontend
    npm run build
    ```
-   Folder hasil build `frontend/dist` dapat disajikan langsung oleh web server (Nginx/Cloudflare Pages) atau diarahkan ke public storage Laravel.
+   Folder hasil build `frontend/dist` dapat disajikan langsung oleh web server (Vercel, Cloudflare Pages, atau Nginx).
 
 2. **Optimasi Backend**:
    ```bash
@@ -249,7 +271,8 @@ php artisan migrate:fresh --seed
 3. **Environment Variabel Produksi**:
    - Ubah `APP_ENV=production` dan `APP_DEBUG=false`.
    - Set `APP_KEY` melalui `php artisan key:generate`.
-   - Tentukan `FRONTEND_URL` dengan domain produksi Anda (misal `https://app.fintrack.id`).
+   - Tentukan `FRONTEND_URL` dengan domain produksi Anda (misal `https://app.fintrack.id` atau domain Vercel Anda).
+
 
 ---
 
