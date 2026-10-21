@@ -66,6 +66,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const login = async (credentials: any) => {
     const res = await api.login(credentials);
+    if (!res || !res.user || !res.token) {
+      throw new Error('Gagal memproses data login dari server.');
+    }
     setUser(res.user);
     setToken(res.token);
     localStorage.setItem('fintrack_token', res.token);
@@ -74,6 +77,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const register = async (payload: any) => {
     const res = await api.register(payload);
+    if (!res || !res.user || !res.token) {
+      throw new Error('Gagal memproses data pendaftaran dari server.');
+    }
     setUser(res.user);
     setToken(res.token);
     localStorage.setItem('fintrack_token', res.token);

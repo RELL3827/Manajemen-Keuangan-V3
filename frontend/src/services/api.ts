@@ -14,9 +14,29 @@ export class ApiError extends Error {
 }
 
 function isFallbackEligible(error: any): boolean {
-  if (error instanceof TypeError) return true; // fetch network error (offline or backend not deployed)
-  if (error?.status === 404 || error?.status === 502 || error?.status === 503 || error?.status === 504) return true;
-  if (error?.message && (error.message.includes('Failed to fetch') || error.message.includes('NetworkError'))) return true;
+  if (error instanceof TypeError) return true; // fetch network error (offline, CORS, backend down)
+  if (error?.isHtmlResponse) return true;
+  if (
+    error?.status === 404 ||
+    error?.status === 405 ||
+    error?.status === 500 ||
+    error?.status === 502 ||
+    error?.status === 503 ||
+    error?.status === 504
+  ) {
+    return true;
+  }
+  const msg = String(error?.message || '').toLowerCase();
+  if (
+    msg.includes('failed to fetch') ||
+    msg.includes('networkerror') ||
+    msg.includes('kesalahan sistem') ||
+    msg.includes('tidak merespon format json') ||
+    msg.includes('not found') ||
+    msg.includes('method not allowed')
+  ) {
+    return true;
+  }
   return false;
 }
 
@@ -25,7 +45,7 @@ async function withFallback<T>(apiFn: () => Promise<T>, fallbackFn: () => Promis
     return await apiFn();
   } catch (error: any) {
     if (isFallbackEligible(error)) {
-      console.warn('Backend server unreachable, operating in standalone demo mode:', error);
+      console.warn('Backend server unreachable or static SPA host detected, operating in standalone demo mode:', error);
       return await fallbackFn();
     }
     throw error;
@@ -58,20 +78,46 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
     }
   }
 
-  const contentType = response.headers.get('content-type');
+  const contentType = response.headers.get('content-type') || '';
   let data: any = null;
 
-  if (contentType && contentType.includes('application/json')) {
-    data = await response.json();
-  } else if (contentType && (contentType.includes('text/csv') || contentType.includes('octet-stream'))) {
+  if (contentType.includes('application/json')) {
+    try {
+      data = await response.json();
+    } catch {
+      data = null;
+    }
+  } else if (contentType.includes('text/csv') || contentType.includes('octet-stream')) {
     return (await response.blob()) as unknown as T;
   } else {
     data = await response.text();
+    // If server returned an HTML file or 404/405 (typical on Vercel when static rewrite serves index.html)
+    if (
+      typeof data === 'string' &&
+      (data.includes('<!doctype') || data.includes('<html') || response.status === 405 || response.status === 404)
+    ) {
+      const err = new ApiError('Backend API tidak merespon format JSON yang valid.', response.status, data);
+      (err as any).isHtmlResponse = true;
+      throw err;
+    }
   }
 
   if (!response.ok) {
-    const errorMsg = data?.message || (data?.errors ? Object.values(data.errors).flat().join(', ') : 'Terjadi kesalahan sistem.');
-    throw new ApiError(errorMsg, response.status, data);
+    const errorMsg =
+      data?.message ||
+      (data?.errors ? Object.values(data.errors).flat().join(', ') : 'Terjadi kesalahan sistem.');
+    const err = new ApiError(errorMsg, response.status, data);
+    if (response.status === 404 || response.status === 405) {
+      (err as any).isHtmlResponse = true;
+    }
+    throw err;
+  }
+
+  // Also check if data is an HTML document even if HTTP status was 200 (SPA catch-all rewrite)
+  if (typeof data === 'string' && (data.includes('<!doctype') || data.includes('<html'))) {
+    const err = new ApiError('Backend API tidak merespon format JSON yang valid.', 200, data);
+    (err as any).isHtmlResponse = true;
+    throw err;
   }
 
   return data as T;
